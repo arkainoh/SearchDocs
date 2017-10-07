@@ -1,6 +1,8 @@
 import nltk
 from nltk.corpus import stopwords as sw
 import numpy as np
+import math
+import os
 
 class Tools:
 	def tokenize(self, inputstr, onlyalpha = True, stopwords = False, stemmer = True):
@@ -20,6 +22,24 @@ class Tools:
 
 		return tokens
 
+tools = Tools()
+
+class Document:
+	def __init__(self, filename, onlyalpha = True, stopwords = False, stemmer = True):
+		filepath = os.path.abspath(filename)
+		meta = os.path.split(filepath)
+
+		self.filepath = filepath
+		self.dir = meta[0]
+		self.filename = meta[1]
+		self.content = ""
+		f = open(filepath, 'r', encoding = 'utf-8')
+		lines = f.readlines()
+		for line in lines:
+			self.content += line
+		f.close()
+		self.tokens = tools.tokenize(self.content, onlyalpha, stopwords, stemmer)
+
 class Vocabulary:
 	def __init__(self):
 		self.vector = {}
@@ -38,7 +58,7 @@ class Vocabulary:
 	def at(self, i): # get ith word in the vector
 		return list(self.vector)[i]
 
-	# vectorize = string -> numpy.array
+	# vectorize = str -> numpy.array
 	def word2vec(self, word):
 		v = [0 for i in range(self.size())]
 		if word in self.vector:
@@ -47,10 +67,10 @@ class Vocabulary:
 			print("<ERROR> Word \'" + word + "\' Not Found")
 		return np.array(v)
 
-	# vectorize = tokens -> numpy.array
+	# vectorize = Document -> numpy.array
 	def doc2vec(self, doc):
 		v = [0 for i in range(self.size())]
-		for token in doc:
+		for token in doc.tokens:
 			if token in self.vector:
 				v[self.indexOf(token)] += 1
 		return np.array(v)
@@ -77,5 +97,5 @@ class Vocabulary:
 		s += ")"
 		return s
 
-tools = Tools()
 vocab = Vocabulary()
+
