@@ -64,7 +64,7 @@ class Vocabulary:
 		if word in self.vector:
 			v[self.indexOf(word)] = 1
 		else:
-			print("<ERROR> Word \'" + word + "\' Not Found")
+			raise ValueError("Word \'" + word + "\' Not Found")
 		return np.array(v)
 
 	# vectorize = Document -> numpy.array
@@ -98,4 +98,25 @@ class Vocabulary:
 		return s
 
 vocab = Vocabulary()
+
+class IndexTable:
+	def __init__(self):
+		self.idx = {}
+		self.iidx = {}
+		if vocab.size() > 0:
+			for word in vocab.vector:
+				self.iidx[word] = set()
+		else:
+			raise ValueError("Vocabulary is empty")
+
+	def add(self, doc):
+		self.idx[doc.filename] = nltk.Text(doc.tokens).vocab()
+		for token in doc.tokens:
+			self.iidx[token].add(doc.filename)
+
+	def addall(self, dirpath, onlyalpha = True, stopwords = False, stemmer = True):
+		flist = [f for f in os.listdir(dirpath) if os.path.isfile(os.path.join(dirpath, f))]
+		for f in flist:
+			doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
+			self.add(doc)
 
