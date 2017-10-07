@@ -115,8 +115,36 @@ class IndexTable:
 			self.iidx[token].add(doc.filename)
 
 	def addall(self, dirpath, onlyalpha = True, stopwords = False, stemmer = True):
-		flist = [f for f in os.listdir(dirpath) if os.path.isfile(os.path.join(dirpath, f))]
+		dlist = os.listdir(dirpath)
+		flist = []
+
+		for tmp in dlist:
+			tmppath = os.path.join(dirpath, tmp)
+			if os.path.isfile(tmppath):
+				flist.append(tmp)
+			elif os.path.isdir(tmppath):
+				self.addall(tmppath, onlyalpha, stopwords, stemmer)
+
 		for f in flist:
 			doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
 			self.add(doc)
+
+def build(dirpath, onlyalpha = True, stopwords = False, stemmer = True):
+	dlist = os.listdir(dirpath)
+	flist = []
+
+	for tmp in dlist:
+		tmppath = os.path.join(dirpath, tmp)
+		if os.path.isfile(tmppath):
+			flist.append(tmp)
+		elif os.path.isdir(tmppath):
+			build(tmppath, onlyalpha, stopwords, stemmer)
+
+	for f in flist:
+		doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
+		vocab.add(doc.tokens)
+	
+	global itable
+	itable = IndexTable()
+	itable.addall(dirpath)
 
