@@ -3,6 +3,7 @@ from nltk.corpus import stopwords as sw
 import numpy as np
 import math
 import os
+from collections import OrderedDict
 
 class Tools:
 	def tokenize(self, inputstr, onlyalpha = True, stopwords = False, stemmer = True):
@@ -42,14 +43,17 @@ class Document:
 
 class Vocabulary:
 	def __init__(self):
-		self.vector = {}
+		self.vector = OrderedDict()
 
-	def add(self, tokens):
+	def add(self, token):
+		if token not in self.vector and not token.isspace() and token != '':
+			self.vector[token] = len(self.vector)
+
+	def addall(self, tokens):
 		for token in tokens:
-			if token not in self.vector and not token.isspace() and token != '':
-				self.vector[token] = len(self.vector)
+			self.add(token)
 
-	def indexOf(self, vocab):
+	def index(self, vocab):
 		return self.vector[vocab]
 
 	def size(self):
@@ -62,7 +66,7 @@ class Vocabulary:
 	def word2vec(self, word):
 		v = [0 for i in range(self.size())]
 		if word in self.vector:
-			v[self.indexOf(word)] = 1
+			v[self.index(word)] = 1
 		else:
 			raise ValueError("Word \'" + word + "\' Not Found")
 		return np.array(v)
@@ -72,7 +76,7 @@ class Vocabulary:
 		v = [0 for i in range(self.size())]
 		for token in doc.tokens:
 			if token in self.vector:
-				v[self.indexOf(token)] += 1
+				v[self.index(token)] += 1
 		return np.array(v)
 
 	def save(self, filename):
@@ -85,7 +89,7 @@ class Vocabulary:
 		f = open(filename, 'r', encoding='utf-8')
 		lines = f.readlines()
 		bow = [i[:-1] for i in lines]
-		self.add(bow)
+		self.addall(bow)
 		f.close()
 	
 	def __str__(self):
@@ -101,8 +105,13 @@ vocab = Vocabulary()
 
 class IndexTable:
 	def __init__(self):
-		self.idx = {}
-		self.iidx = {}
+		self.idx = OrderedDict()
+		self.iidx = OrderedDict()
+		self.tf_vector = []
+		self.idf_vector = []
+		self.tfidf_vector = []
+		self.doc_idx = Vocabulary()
+
 		if vocab.size() > 0:
 			for word in vocab.vector:
 				self.iidx[word] = set()
@@ -111,8 +120,16 @@ class IndexTable:
 
 	def add(self, doc):
 		self.idx[doc.filename] = nltk.Text(doc.tokens).vocab()
+		self.doc_idx.add(doc.filename)
+		
 		for token in doc.tokens:
 			self.iidx[token].add(doc.filename)
+		
+		v = [0 for i in range(vocab.size())]
+		fd = self.idx[doc.filename]
+		for term in fd:
+			v[vocab.index(term)] = 1 + math.log10(fd[term])
+		self.tf_vector.append(v)
 
 	def addall(self, dirpath, onlyalpha = True, stopwords = False, stemmer = True):
 		dlist = os.listdir(dirpath)
@@ -129,6 +146,18 @@ class IndexTable:
 			doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
 			self.add(doc)
 
+	def _calculate_idf(self):
+		D = self.doc_idx.size()
+		self.idf_vector = [D for i in range(vocab.size())]
+		for term in self.iidx:
+			self.idf_vector[vocab.index(term)] = math.log10(self.idf_vector[vocab.index(term)] / (1 + len(self.iidx[term])))
+	
+	def calculate_tfidf(self):
+		self._calculate_idf()
+		tf = np.array(self.tf_vector)
+		idf = np.array(self.idf_vector)
+		self.tfidf_vector = (tf * idf).tolist()
+
 def build(dirpath, onlyalpha = True, stopwords = False, stemmer = True):
 	dlist = os.listdir(dirpath)
 	flist = []
@@ -142,9 +171,10 @@ def build(dirpath, onlyalpha = True, stopwords = False, stemmer = True):
 
 	for f in flist:
 		doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
-		vocab.add(doc.tokens)
+		vocab.addall(doc.tokens)
 	
 	global itable
 	itable = IndexTable()
 	itable.addall(dirpath)
+	itable.calculate_tfidf()
 
