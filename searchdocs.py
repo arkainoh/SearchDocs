@@ -34,6 +34,7 @@ class Document:
 		self.dir = meta[0]
 		self.filename = meta[1]
 		self.content = ""
+
 		f = open(filepath, 'r', encoding = 'utf-8')
 		lines = f.readlines()
 		for line in lines:
@@ -44,23 +45,28 @@ class Document:
 class Vocabulary:
 	def __init__(self):
 		self.vector = OrderedDict()
+		self.entry = []
 
 	def add(self, token):
 		if token not in self.vector and not token.isspace() and token != '':
 			self.vector[token] = len(self.vector)
+			self.entry.append(token)
 
 	def addall(self, tokens):
 		for token in tokens:
 			self.add(token)
 
-	def index(self, vocab):
-		return self.vector[vocab]
+	def has(self, token):
+		return token in self.vector
+
+	def index(self, token):
+		return self.vector[token]
 
 	def size(self):
 		return len(self.vector)
 
 	def at(self, i): # get ith word in the vector
-		return list(self.vector)[i]
+		return self.entry[i]
 
 	# vectorize = str -> numpy.array
 	def word2vec(self, word):
@@ -109,7 +115,7 @@ class IndexTable:
 		self.iidx = OrderedDict()
 		self.tf_vector = []
 		self.idf_vector = []
-		self.tfidf_vector = []
+		self.tfidf_vector = np.zeros(0)
 		self.doc_idx = Vocabulary()
 
 		if vocab.size() > 0:
@@ -156,7 +162,16 @@ class IndexTable:
 		self._calculate_idf()
 		tf = np.array(self.tf_vector)
 		idf = np.array(self.idf_vector)
-		self.tfidf_vector = (tf * idf).tolist()
+		self.tfidf_vector = tf * idf
+
+	def tfidf(self, term, doc):
+		if doc.filename not in self.idx:
+			raise ValueError("Document not found")
+
+		if vocab.has(term):
+			return self.tfidf_vector[self.doc_idx.index(doc.filename)][vocab.index(term)]
+		else:
+		  return 0
 
 def build(dirpath, onlyalpha = True, stopwords = False, stemmer = True):
 	dlist = os.listdir(dirpath)
@@ -177,4 +192,17 @@ def build(dirpath, onlyalpha = True, stopwords = False, stemmer = True):
 	itable = IndexTable()
 	itable.addall(dirpath)
 	itable.calculate_tfidf()
+
+def search(query, onlyalpha = True, stopwords = False, stemmer = True):
+	tokens = tools.tokenize(query, onlyalpha, stopwords, stemmer)
+
+	v = np.zeros(itable.doc_idx.size())
+	for token in tokens:
+		if vocab.has(token):
+			v += itable.tfidf_vector[:, vocab.index(token)]
+
+	ret = [(itable.doc_idx.at(i), v[i]) for i in range(itable.doc_idx.size())]
+	ret = sorted(ret, key = lambda x: x[1], reverse = True)
+
+	return [i[0] for i in ret if i[1] > 0]
 
