@@ -40,7 +40,7 @@ class IndexTable:
 			v[self.vocab.index(term)] = 1 + math.log10(fd[term])
 		self.tf_vector.append(v)
 
-	def addall(self, dirpath, onlyalpha = True, stopwords = False, stemmer = True):
+	def addall(self, dirpath):
 		dlist = os.listdir(dirpath)
 		flist = []
 
@@ -49,10 +49,10 @@ class IndexTable:
 			if os.path.isfile(tmppath):
 				flist.append(tmp)
 			elif os.path.isdir(tmppath):
-				self.addall(tmppath, onlyalpha, stopwords, stemmer)
+				self.addall(tmppath)
 
 		for f in flist:
-			doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
+			doc = Document(os.path.join(dirpath, f))
 			self.add(doc)
 
 	def _compute_idf(self):

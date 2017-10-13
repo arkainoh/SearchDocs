@@ -1,7 +1,7 @@
 import os
 
 class Document:
-	def __init__(self, filename, onlyalpha = True, stopwords = False, stemmer = True):
+	def __init__(self, filename):
 		filepath = os.path.abspath(filename)
 		meta = os.path.split(filepath)
 

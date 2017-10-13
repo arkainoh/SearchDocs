@@ -41,12 +41,12 @@ def build(dirpath, onlyalpha = True, stopwords = False, stemmer = True):
 			build(tmppath, onlyalpha, stopwords, stemmer)
 
 	for f in flist:
-		doc = Document(os.path.join(dirpath, f), onlyalpha, stopwords, stemmer)
+		doc = Document(os.path.join(dirpath, f))
 		tokens = tools.tokenize(doc.content, onlyalpha, stopwords, stemmer)
 		vocab.addall(tokens)
 	
 	global itable
-	itable = IndexTable(vocab)
+	itable = IndexTable(vocab, onlyalpha, stopwords, stemmer)
 	itable.addall(dirpath)
 	itable.compute_tfidf()
 
