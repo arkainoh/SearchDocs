@@ -1,3 +1,5 @@
+import sys
+sys.path.append('src')
 import searchdocs as sd
 import numpy as np
 import sys
