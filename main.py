@@ -4,12 +4,15 @@ import sys
 
 if __name__ == '__main__':
 
-	sd.build("./data")
 	if len(sys.argv) <= 1:
 		exit()
+
+	se = sd.SearchEngine()
 	
-	sd.build("./data")
-	l = sd.search(sys.argv[1])
+	# se.build("./data")
+	se.load('./sample/sample.voc', './sample/sample.itable')
+
+	l = se.search(sys.argv[1])
 	for i in range(5):
 		print(str(i+1) + ": " + l[i])
 
