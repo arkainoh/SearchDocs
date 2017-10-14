@@ -4,8 +4,20 @@ import math
 import numpy as np
 import os
 from doc import Document
-import searchdocs as sd
+import tools
 import nltk
+import pickle
+
+def save(obj, filename):
+	f = open(filename, 'wb')
+	pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+	f.close()
+
+def load(filename):
+	f = open(filename, 'rb')
+	ret = pickle.load(f)
+	f.close()
+	return ret
 
 class IndexTable:
 	def __init__(self, vocab, onlyalpha = True, stopwords = False, stemmer = True):
@@ -27,7 +39,7 @@ class IndexTable:
 			raise ValueError("Vocabulary is empty")
 
 	def add(self, doc):
-		tokens = sd.tools.tokenize(doc.content, self.onlyalpha, self.stopwords, self.stemmer)
+		tokens = tools.tokenize(doc.content, self.onlyalpha, self.stopwords, self.stemmer)
 		self.idx[doc.filename] = nltk.Text(tokens).vocab()
 		self.doc_idx.add(doc.filename)
 		
@@ -75,4 +87,4 @@ class IndexTable:
 			return self.tfidf_vector[self.doc_idx.index(doc.filename)][self.vocab.index(term)]
 		else:
 		  return 0
-
+	
