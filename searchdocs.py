@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import os
 from collections import OrderedDict
 import itable
