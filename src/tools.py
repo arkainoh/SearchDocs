@@ -1,5 +1,6 @@
 import nltk
 from nltk.corpus import stopwords as sw
+import math
 
 def tokenize(inputstr, onlyalpha = True, stopwords = False, stemmer = True):
 	inputstr = inputstr.lower()
@@ -17,4 +18,11 @@ def tokenize(inputstr, onlyalpha = True, stopwords = False, stemmer = True):
 		tokens = [stmr.stem(i) for i in tokens]
 
 	return tokens
+
+def cosine_similarity(A, B):
+	multi = (A.dot(B))
+	x = math.sqrt(A.dot(A))
+	y = math.sqrt(B.dot(B))
+	result = multi / (x * y)
+	return result
 
