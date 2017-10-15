@@ -46,16 +46,25 @@ class SearchEngine:
 			elif os.path.isdir(tmppath):
 				self.collect_files(tmppath, l)
 
-	def search(self, query):
+	def search(self, query, vsm = True):
 		tokens = tools.tokenize(query, self.onlyalpha, self.stopwords, self.stemmer)
 
-		v = np.zeros(self.itable.doc_idx.size())
-		for token in tokens:
-			if self.vocab.has(token):
-				v += self.itable.tfidf_vector[:, self.vocab.index(token)]
+		if(vsm):
+			tf = self.vocab.doc2vec(tokens)
+			for token in tokens:
+				tf[self.vocab.index(token)] = self.itable.compute_tf(tf[self.vocab.index(token)])
+			tfidf = tf * self.itable.idf_vector
+			ret = [(self.itable.doc_idx.at(i), tools.cosine_similarity(tfidf, self.itable.tfidf_vector[i])) for i in range(self.itable.doc_idx.size())]
 
-		ret = [(self.itable.doc_idx.at(i), v[i]) for i in range(self.itable.doc_idx.size())]
+		else:
+			v = np.zeros(self.itable.doc_idx.size())
+			for token in tokens:
+				if self.vocab.has(token):
+					v += self.itable.tfidf_vector[:, self.vocab.index(token)]
+
+			ret = [(self.itable.doc_idx.at(i), v[i]) for i in range(self.itable.doc_idx.size())]
+		
 		ret = sorted(ret, key = lambda x: x[1], reverse = True)
-
 		return [i[0] for i in ret if i[1] > 0]
+
 
