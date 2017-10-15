@@ -28,7 +28,7 @@ class Vocabulary:
 	def at(self, i):
 		return self.entry[i]
 
-	# vectorize = str -> numpy.array
+	# word2vec = str -> numpy.array
 	# get one-hot encoded vector of a word
 	def word2vec(self, word):
 		v = [0 for i in range(self.size())]
@@ -38,11 +38,11 @@ class Vocabulary:
 			raise ValueError("Word \'" + word + "\' Not Found")
 		return np.array(v)
 
-	# vectorize = Document -> numpy.array
-	# get word count vector of a document
-	def doc2vec(self, doc):
+	# doc2vec = list -> numpy.array
+	# get word count vector of the given tokens
+	def doc2vec(self, tokens):
 		v = [0 for i in range(self.size())]
-		for token in doc.tokens:
+		for token in tokens:
 			if token in self.vector:
 				v[self.index(token)] += 1
 		return np.array(v)
