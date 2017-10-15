@@ -49,7 +49,7 @@ class IndexTable:
 		v = [0 for i in range(self.vocab.size())]
 		fd = self.idx[doc.filename]
 		for term in fd:
-			v[self.vocab.index(term)] = 1 + math.log10(fd[term])
+			v[self.vocab.index(term)] = self.compute_tf(fd[term])
 		self.tf_vector.append(v)
 
 	def addall(self, dirpath):
@@ -67,14 +67,17 @@ class IndexTable:
 			doc = Document(os.path.join(dirpath, f))
 			self.add(doc)
 
-	def _compute_idf(self):
+	def compute_tf(self, tf):
+		return 1 + math.log10(tf)
+
+	def compute_idf(self):
 		D = self.doc_idx.size()
 		self.idf_vector = [D for i in range(self.vocab.size())]
 		for term in self.iidx:
 			self.idf_vector[self.vocab.index(term)] = math.log10(self.idf_vector[self.vocab.index(term)] / (1 + len(self.iidx[term])))
 	
 	def compute_tfidf(self):
-		self._compute_idf()
+		self.compute_idf()
 		tf = np.array(self.tf_vector)
 		idf = np.array(self.idf_vector)
 		self.tfidf_vector = tf * idf
